@@ -51,4 +51,10 @@ const whole = shop.footer({ year: 2026 });
 assert.ok(whole.html.includes('support@example.test') && whole.html.includes('02-1234-5678') && whole.html.includes('© 2026 範例小站'));
 assert.deepStrictEqual(shop.check({ home: whole.html }), []);
 console.log('\n--- 頁尾 ---\n' + whole.html);
+// 分欄的頁尾：站上本來散著的連結收成幾欄，政策那一欄是 kit 自己加的，所以檢查一樣會過。
+const wide = shop.footer({ year: 2026, columns: [{ title: '產品', links: [{ label: '方案', href: '/pricing' }] }, { title: '教學', links: [{ label: '文件', href: '/docs' }] }] });
+assert.strictEqual((wide.html.match(/sd-footer-col/g) || []).length, 3);
+assert.ok(wide.html.includes('<h3>支援</h3>') && wide.html.includes('02-1234-5678'));
+assert.deepStrictEqual(shop.check({ home: wide.html }), []);
+
 console.log('\nok');

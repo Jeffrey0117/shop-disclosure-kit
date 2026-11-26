@@ -122,41 +122,83 @@ module.exports = function create(opts = {}) {
   }
 
   /**
-   * 一整塊頁尾：左邊是名字（和標誌）、底下寫出信箱、電話、地址；右邊是政策連結、底下是版權。
-   * 審核的人滑到最底就看到是誰、怎麼聯絡、政策在哪——不要跟站上其他的連結（教學、關鍵字頁）混在同一排。
-   * { html, css }：css 只管 .sd-footer 底下的東西，顏色跟著所在頁面走（currentColor），不會動到別處。
-   * @param {{ logo?: string, year?: number, note?: string }} [look]  logo：標誌圖的網址；note：版權後面接的一小句
+   * 一整塊頁尾：是誰、怎麼聯絡、政策在哪。審核的人滑到最底就看到——不要跟站上其他的連結混在同一排。
+   *
+   * 兩種排法：
+   *   - 沒給 columns：兩列。上面是名字和政策連結，下面是信箱、電話、地址和版權。
+   *   - 給了 columns（[{ title, links: [{ label, href }] }]）：分欄。左邊是名字、信箱、電話、地址；右邊是你的
+   *     幾欄連結，最後自動加一欄政策（標題是 supportTitle）；最底下一條版權。站上本來散在頁尾的連結
+   *     （教學、產品頁…）收進這幾欄，整個頁尾就是一塊。
+   * { html, css }：css 只管 .sd-footer 底下的東西，顏色跟著所在頁面走，不會動到別處。
+   * @param {{ logo?: string, year?: number, note?: string, columns?: object[], supportTitle?: string, tagline?: string }} [look]
+   *        logo：標誌圖的網址；note：版權後面接的一小句；tagline：名字底下的一句話（分欄時）
    */
-  function footer({ logo = null, year = new Date().getFullYear(), note = '' } = {}) {
+  function footer({ logo = null, year = new Date().getFullYear(), note = '', columns = null, supportTitle = '支援', tagline = '' } = {}) {
     const facts = [
       `<a href="mailto:${escapeHtml(contact.email)}">${escapeHtml(contact.email)}</a>`,
       ...(contact.phone ? [`<a href="tel:${escapeHtml(contact.phone.replace(/[^\d+]/g, ''))}">${escapeHtml(contact.phone)}</a>`] : []),
       ...(optional(opts.contact.address) ? [`<span>${escapeHtml(opts.contact.address.trim())}</span>`] : []),
     ];
-    const links = footerLinks().map((link) => `<a href="${escapeHtml(link.href)}">${escapeHtml(link.label)}</a>`);
-    const html = [
-      '<footer class="sd-footer">',
-      '  <div class="sd-footer-row">',
-      `    <div class="sd-footer-brand">${logo ? `<img src="${escapeHtml(logo)}" alt="" width="24" height="24">` : ''}<b>${escapeHtml(brand)}</b></div>`,
-      `    <nav class="sd-footer-links">${links.join('')}</nav>`,
-      '  </div>',
-      '  <div class="sd-footer-row">',
-      `    <div class="sd-footer-facts">${facts.join('')}</div>`,
-      `    <div class="sd-footer-copy">© ${year} ${escapeHtml(brand)}${note ? `・${escapeHtml(note)}` : ''}</div>`,
-      '  </div>',
-      '</footer>',
-    ].join('\n');
-    const css = [
+    const anchor = (link) => `<a href="${escapeHtml(link.href)}">${escapeHtml(link.label)}</a>`;
+    const brandHtml = `<div class="sd-footer-brand">${logo ? `<img src="${escapeHtml(logo)}" alt="" width="24" height="24">` : ''}<b>${escapeHtml(brand)}</b></div>`;
+    const copy = `© ${year} ${escapeHtml(brand)}${note ? `・${escapeHtml(note)}` : ''}`;
+    const base = [
       '.sd-footer{display:block;padding:1.75rem 1.5rem 2rem;border-top:1px solid rgba(128,128,128,.22);font-size:.9rem;line-height:1.6}',
-      '.sd-footer-row{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:.6rem 1.75rem;max-width:1100px;margin:0 auto}',
-      '.sd-footer-row+.sd-footer-row{margin-top:.75rem}',
       '.sd-footer-brand{display:flex;align-items:center;gap:.55rem;font-size:1rem}',
       '.sd-footer-brand img{border-radius:6px;display:block}',
-      '.sd-footer-links,.sd-footer-facts{display:flex;flex-wrap:wrap;gap:.35rem 1.6rem}',
       '.sd-footer a{color:inherit;opacity:.72;text-decoration:none}',
       '.sd-footer a:hover{opacity:1;text-decoration:underline}',
       '.sd-footer-facts,.sd-footer-copy{opacity:.72}',
       '.sd-footer-facts a{opacity:1}',
+    ];
+
+    if (Array.isArray(columns) && columns.length > 0) {
+      const all = [...columns, { title: supportTitle, links: footerLinks() }];
+      const html = [
+        '<footer class="sd-footer sd-footer-wide">',
+        '  <div class="sd-footer-top">',
+        '    <div class="sd-footer-about">',
+        `      ${brandHtml}`,
+        ...(tagline ? [`      <p class="sd-footer-tagline">${escapeHtml(tagline)}</p>`] : []),
+        `      <div class="sd-footer-facts">${facts.join('')}</div>`,
+        '    </div>',
+        ...all.map((column) => `    <nav class="sd-footer-col"><h3>${escapeHtml(column.title)}</h3>${column.links.map(anchor).join('')}</nav>`),
+        '  </div>',
+        `  <div class="sd-footer-bottom"><span class="sd-footer-copy">${copy}</span></div>`,
+        '</footer>',
+      ].join('\n');
+      const css = [
+        ...base,
+        '.sd-footer-wide{padding:3rem 1.5rem 1.5rem}',
+        `.sd-footer-top{display:grid;grid-template-columns:minmax(200px,1.5fr) repeat(${all.length},minmax(110px,1fr));gap:2rem 2.5rem;max-width:1100px;margin:0 auto}`,
+        '.sd-footer-about .sd-footer-brand{font-size:1.1rem}',
+        '.sd-footer-tagline{margin:.6rem 0 0;opacity:.72;max-width:26em}',
+        '.sd-footer-wide .sd-footer-facts{display:flex;flex-direction:column;gap:.2rem;margin-top:.9rem}',
+        '.sd-footer-col{display:flex;flex-direction:column;gap:.5rem;min-width:0}',
+        '.sd-footer-col h3{margin:0 0 .25rem;font-size:.78rem;font-weight:700;letter-spacing:.08em;opacity:.55}',
+        '.sd-footer-bottom{max-width:1100px;margin:2.25rem auto 0;padding-top:1.1rem;border-top:1px solid rgba(128,128,128,.18);font-size:.82rem}',
+        '@media(max-width:820px){.sd-footer-top{grid-template-columns:repeat(2,minmax(0,1fr))}.sd-footer-about{grid-column:1/-1}}',
+      ].join('\n');
+      return { html, css };
+    }
+
+    const html = [
+      '<footer class="sd-footer">',
+      '  <div class="sd-footer-row">',
+      `    ${brandHtml}`,
+      `    <nav class="sd-footer-links">${footerLinks().map(anchor).join('')}</nav>`,
+      '  </div>',
+      '  <div class="sd-footer-row">',
+      `    <div class="sd-footer-facts">${facts.join('')}</div>`,
+      `    <div class="sd-footer-copy">${copy}</div>`,
+      '  </div>',
+      '</footer>',
+    ].join('\n');
+    const css = [
+      ...base,
+      '.sd-footer-row{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:.6rem 1.75rem;max-width:1100px;margin:0 auto}',
+      '.sd-footer-row+.sd-footer-row{margin-top:.75rem}',
+      '.sd-footer-links,.sd-footer-facts{display:flex;flex-wrap:wrap;gap:.35rem 1.6rem}',
       '@media(max-width:640px){.sd-footer-row{flex-direction:column;align-items:flex-start}}',
     ].join('\n');
     return { html, css };
