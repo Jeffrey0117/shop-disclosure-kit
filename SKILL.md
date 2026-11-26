@@ -35,7 +35,8 @@ description: 網站要接金流、申請金流商店（藍新／PayUni／綠界�
 const shop = require('shop-disclosure-kit')(require('./disclosure.json'));
 shop.refundHtml();        // 退款政策頁的內文
 shop.contactHtml();       // 聯絡頁的客服資訊（<dl>）
-shop.footerLinks();       // 頁尾連結 [{ label, href }]
+shop.footer({ logo });    // 一整塊頁尾 { html, css }：名字、信箱、電話寫出來，政策連結在另一邊
+shop.footerLinks();       // 只要連結的話 [{ label, href }]
 shop.checkoutNote().html; // 方案頁、付款頁的一句話
 ```
 
@@ -50,7 +51,7 @@ npx github:Jeffrey0117/shop-disclosure-kit check disclosure.json https://你的�
 ## 模式與文案
 
 - **審核的人怎麼看**：打開首頁，往下滑到頁尾找「退款」和「聯絡」。找不到就退件，不會去翻服務條款第七條。所以：
-  1. 首頁頁尾要有「退款政策」「聯絡客服」兩個連結。
+  1. 首頁頁尾要有「退款政策」「聯絡客服」兩個連結，而且**信箱、電話直接寫在頁尾**。用 `footer()` 那一整塊，自己一區，不要跟站上的教學、關鍵字連結排在同一排（2026-11-26 Pipee 第一版就是混在一起被打槍）。
   2. 退款政策是**自己一頁**，不是埋在服務條款裡。
   3. 聯絡頁要**寫出**信箱和服務時間。只有表單不算：表單送去哪、多久回，審核的人看不到。
   4. 方案頁、付款頁在價格附近放一句話連到退款政策。

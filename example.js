@@ -46,4 +46,9 @@ assert.deepStrictEqual(shop.check({ contact: cloaked }), []);
 assert.ok(create({ brand: 'A', contact: { email: 'a@example.test' }, refund: { policy: 'days', days: 7, sells: ['課程'] } }).refundText().includes('付款後 7 天內'));
 assert.throws(() => create({ brand: 'A', contact: { email: 'a@example.test' }, refund: { policy: 'days', sells: ['課程'] } }), /refund\.days/);
 assert.throws(() => create({ brand: 'A', contact: {}, refund: { policy: 'none', sells: ['x'] } }), /contact\.email/);
+// 一整塊頁尾：名字、信箱、電話寫出來，政策連結在另一邊；放上去之後首頁就不缺了。
+const whole = shop.footer({ year: 2026 });
+assert.ok(whole.html.includes('support@example.test') && whole.html.includes('02-1234-5678') && whole.html.includes('© 2026 範例小站'));
+assert.deepStrictEqual(shop.check({ home: whole.html }), []);
+console.log('\n--- 頁尾 ---\n' + whole.html);
 console.log('\nok');

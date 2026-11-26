@@ -18,6 +18,7 @@ const shop = require('shop-disclosure-kit')({
 shop.refundHtml();         // 退款政策頁的內文（<section> 一串，沒有樣式）
 shop.refundText();         // 同樣內容的純文字
 shop.contactHtml();        // 客服資訊（<dl>）
+shop.footer({ logo: '/logo.png' }); // { html, css }：一整塊頁尾（名字、信箱、電話、地址；政策連結；版權）
 shop.footerLinks();        // [{ label: '退款政策', href: '/refund' }, …]
 shop.checkoutNote();       // { text, html }：方案頁、付款頁的一句話
 shop.check({ home, refund, contact, pricing, checkout }); // 給幾頁的 HTML，回傳缺什麼
@@ -28,7 +29,7 @@ shop.check({ home, refund, contact, pricing, checkout }); // 給幾頁的 HTML�
 | `brand` | 網站或服務的名字 |
 | `contact.email` | 必填。客服信箱 |
 | `contact.hours` | 服務時間。沒寫用「週一至週五 10:00–18:00（國定假日除外），一個工作天內回覆」 |
-| `contact.phone`、`contact.line` | 有就顯示 |
+| `contact.phone`、`contact.line`、`contact.address` | 有就顯示（電話和地址會出現在頁尾） |
 | `refund.policy` | `none` 不退、只能取消續訂／`days` 幾天內全額退（配 `refund.days`）／`prorata` 依剩餘天數退 |
 | `refund.sells` | 必填。賣的是什麼，會寫進政策 |
 | `refund.subscription` | 有定期扣款就設 `true`，會多一節「取消續訂」 |

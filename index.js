@@ -29,6 +29,7 @@ const optional = (value) => (typeof value === 'string' && value.trim() !== '' ? 
  * @param {string} [opts.contact.hours]          服務時間（「週一至週五 10:00–18:00，一個工作天內回覆」）
  * @param {string} [opts.contact.phone]
  * @param {string} [opts.contact.line]           LINE 帳號或連結
+ * @param {string} [opts.contact.address]        地址（有填才顯示在頁尾）
  * @param {string} [opts.contact.formUrl]        聯絡表單的網址（有的話）
  * @param {object} opts.refund                   退款政策
  * @param {'none'|'days'|'prorata'} opts.refund.policy   none：不退，只能取消續訂；days：幾天內可全額退；prorata：依剩餘天數退
@@ -120,6 +121,47 @@ module.exports = function create(opts = {}) {
     ];
   }
 
+  /**
+   * 一整塊頁尾：左邊是名字（和標誌）、底下寫出信箱、電話、地址；右邊是政策連結、底下是版權。
+   * 審核的人滑到最底就看到是誰、怎麼聯絡、政策在哪——不要跟站上其他的連結（教學、關鍵字頁）混在同一排。
+   * { html, css }：css 只管 .sd-footer 底下的東西，顏色跟著所在頁面走（currentColor），不會動到別處。
+   * @param {{ logo?: string, year?: number, note?: string }} [look]  logo：標誌圖的網址；note：版權後面接的一小句
+   */
+  function footer({ logo = null, year = new Date().getFullYear(), note = '' } = {}) {
+    const facts = [
+      `<a href="mailto:${escapeHtml(contact.email)}">${escapeHtml(contact.email)}</a>`,
+      ...(contact.phone ? [`<a href="tel:${escapeHtml(contact.phone.replace(/[^\d+]/g, ''))}">${escapeHtml(contact.phone)}</a>`] : []),
+      ...(optional(opts.contact.address) ? [`<span>${escapeHtml(opts.contact.address.trim())}</span>`] : []),
+    ];
+    const links = footerLinks().map((link) => `<a href="${escapeHtml(link.href)}">${escapeHtml(link.label)}</a>`);
+    const html = [
+      '<footer class="sd-footer">',
+      '  <div class="sd-footer-row">',
+      `    <div class="sd-footer-brand">${logo ? `<img src="${escapeHtml(logo)}" alt="" width="24" height="24">` : ''}<b>${escapeHtml(brand)}</b></div>`,
+      `    <nav class="sd-footer-links">${links.join('')}</nav>`,
+      '  </div>',
+      '  <div class="sd-footer-row">',
+      `    <div class="sd-footer-facts">${facts.join('')}</div>`,
+      `    <div class="sd-footer-copy">© ${year} ${escapeHtml(brand)}${note ? `・${escapeHtml(note)}` : ''}</div>`,
+      '  </div>',
+      '</footer>',
+    ].join('\n');
+    const css = [
+      '.sd-footer{display:block;padding:1.75rem 1.5rem 2rem;border-top:1px solid rgba(128,128,128,.22);font-size:.9rem;line-height:1.6}',
+      '.sd-footer-row{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:.6rem 1.75rem;max-width:1100px;margin:0 auto}',
+      '.sd-footer-row+.sd-footer-row{margin-top:.75rem}',
+      '.sd-footer-brand{display:flex;align-items:center;gap:.55rem;font-size:1rem}',
+      '.sd-footer-brand img{border-radius:6px;display:block}',
+      '.sd-footer-links,.sd-footer-facts{display:flex;flex-wrap:wrap;gap:.35rem 1.6rem}',
+      '.sd-footer a{color:inherit;opacity:.72;text-decoration:none}',
+      '.sd-footer a:hover{opacity:1;text-decoration:underline}',
+      '.sd-footer-facts,.sd-footer-copy{opacity:.72}',
+      '.sd-footer-facts a{opacity:1}',
+      '@media(max-width:640px){.sd-footer-row{flex-direction:column;align-items:flex-start}}',
+    ].join('\n');
+    return { html, css };
+  }
+
   /** 付款頁、方案頁要放的一句話（連到退款政策），純文字和 HTML 各一。 */
   function checkoutNote() {
     const words = { none: '數位服務開通後不提供退款', days: `付款後 ${refund.days} 天內可全額退款`, prorata: '可依剩餘天數按比例退款' }[refund.policy];
@@ -168,7 +210,7 @@ module.exports = function create(opts = {}) {
     return missing;
   }
 
-  return { refundSections, refundHtml, refundText, contactItems, contactHtml, footerLinks, checkoutNote, check, config: { brand, contact, refund, paths, updated } };
+  return { refundSections, refundHtml, refundText, contactItems, contactHtml, footerLinks, footer, checkoutNote, check, config: { brand, contact, refund, paths, updated } };
 };
 
 module.exports.POLICIES = POLICIES;
