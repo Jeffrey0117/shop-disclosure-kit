@@ -138,7 +138,10 @@ module.exports = function create(opts = {}) {
    * 只看「人看得到的字」和連結，不看註解和 script 裡的字。
    */
   function check(pages = {}) {
-    const seen = (html) => String(html || '').replace(/<!--[\s\S]*?-->/g, ' ').replace(/<(script|style)\b[\s\S]*?<\/\1>/gi, ' ');
+    // Cloudflare 會把原始碼裡的信箱打亂（data-cfemail），瀏覽器再用 JS 還原：人看得到，原始碼裡沒有。這裡照它的方式還原再看。
+    const uncloak = (hex) => { const bytes = (hex.match(/../g) || []).map((pair) => parseInt(pair, 16)); return bytes.slice(1).map((byte) => String.fromCharCode(byte ^ bytes[0])).join(''); };
+    const shown = (html) => String(html || '').replace(/<([a-z0-9]+)\b[^>]*\bdata-cfemail=["']([0-9a-f]+)["'][^>]*>[\s\S]*?<\/\1>/gi, (_whole, _tag, hex) => uncloak(hex));
+    const seen = (html) => shown(html).replace(/<!--[\s\S]*?-->/g, ' ').replace(/<(script|style)\b[\s\S]*?<\/\1>/gi, ' ');
     const words = (html) => seen(html).replace(/<[^>]+>/g, ' ').replace(/&middot;|&nbsp;/g, ' ').replace(/\s+/g, ' ');
     const linksTo = (html, href) => new RegExp(`href=["'][^"']*${href.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(\\.html)?["'#?/]`, 'i').test(seen(html) + '"');
     const missing = [];

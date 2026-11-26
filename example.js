@@ -37,6 +37,11 @@ const good = shop.check({
 });
 assert.deepStrictEqual(good, []);
 
+// 線上的頁面：Cloudflare 把信箱打亂成 data-cfemail，原始碼裡看不到，但人看得到——檢查要認得。
+const cloak = (email, key = 0x5a) => key.toString(16).padStart(2, '0') + [...email].map((char) => (char.charCodeAt(0) ^ key).toString(16).padStart(2, '0')).join('');
+const cloaked = `<h1>聯絡我們</h1><p>客服信箱 <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="${cloak('support@example.test')}">[email&#160;protected]</a></p><p>客服電話 02-1234-5678</p><p>服務時間 週一至週五</p>`;
+assert.deepStrictEqual(shop.check({ contact: cloaked }), []);
+
 // 政策是設定：幾天內可退、按比例退，句子跟著變；缺必要的設定會直接丟錯。
 assert.ok(create({ brand: 'A', contact: { email: 'a@example.test' }, refund: { policy: 'days', days: 7, sells: ['課程'] } }).refundText().includes('付款後 7 天內'));
 assert.throws(() => create({ brand: 'A', contact: { email: 'a@example.test' }, refund: { policy: 'days', sells: ['課程'] } }), /refund\.days/);

@@ -61,6 +61,7 @@ npx github:Jeffrey0117/shop-disclosure-kit check disclosure.json https://你的�
 
 ## 地雷
 
+- **Cloudflare 會把原始碼裡的信箱打亂**（`data-cfemail`，瀏覽器用 JS 還原）。人和審核的人都看得到，但 `curl` 下來的原始碼裡沒有信箱。`check` 會照它的方式還原，所以對線上網站跑不會誤報（2026-11-26 pipee.tw 第一次跑就中）。
 - 寫在 HTML 註解或 `<script>` 裡的信箱不算，檢查會當作沒有（審核的人也看不到）。
 - 多語站：靠 JS 換字（`data-i18n`）的頁尾，連結的 `href` 要直接寫在 HTML 裡，檢查和審核看的都是原始 HTML。
 - 改了政策要改設定檔的 `updated`，頁面上會顯示最後更新日期。
