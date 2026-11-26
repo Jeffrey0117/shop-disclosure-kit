@@ -4,9 +4,13 @@
   "description": "金流審核要看的揭露內容：客服聯絡資訊、退款政策。一份設定產生頁面區塊與頁尾連結，並檢查網站有沒有漏。",
   "main": "index.js",
   "scripts": {
-    "example": "node example.js"
+    "example": "node example.js",
+    "test": "node example.js"
   },
   "keywords": [],
   "author": "Jeffrey0117",
-  "license": "MIT"
+  "license": "MIT",
+  "bin": {
+    "shop-disclosure-kit": "cli.js"
+  }
 }
